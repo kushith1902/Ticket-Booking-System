@@ -7,6 +7,7 @@ const os = require('os');
 const { Server } = require('socket.io');
 
 const { initDb } = require('./database/db');
+const { runSeed } = require('./database/seed');
 const { initSocket } = require('./websocket/socketHandler');
 const { startTTLWorker } = require('./jobs/ttlWorker');
 
@@ -76,7 +77,10 @@ function getNetworkIPs() {
     return ips;
 }
 
-initDb().then(() => {
+initDb().then(async () => {
+    // Automatically seed events and venues if database is fresh (e.g., on cloud deploy)
+    await runSeed().catch(e => console.error('Auto-seed error:', e));
+
     server.listen(PORT, '0.0.0.0', () => {
         const ips = getNetworkIPs();
         console.log(`=======================================================`);

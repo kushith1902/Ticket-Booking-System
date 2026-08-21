@@ -1,22 +1,21 @@
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
+const { initDb, run, query, get } = require('./db');
 
-async function seed() {
-    console.log('Starting enhanced seed process with Movies, Concerts, and Sports...');
+async function runSeed() {
+    console.log('Checking database seed status...');
 
-    const dbPath = path.resolve(__dirname, '../../ticketflow.db');
-    if (fs.existsSync(dbPath)) {
-        try {
-            fs.unlinkSync(dbPath);
-            console.log('Deleted previous ticketflow.db for fresh schema recreation.');
-        } catch (e) {
-            console.warn('Note: Could not delete existing db file:', e.message);
-        }
+    await initDb();
+
+    // Check if events already exist
+    const existingEvents = await get('SELECT COUNT(*) as count FROM events');
+    if (existingEvents && existingEvents.count > 0) {
+        console.log(`Database already populated with ${existingEvents.count} events.`);
+        return;
     }
 
-    const { initDb, run, query, get } = require('./db');
-    await initDb();
+    console.log('Seeding initial users, venues, seat layouts, and events...');
 
     // 1. Users
     const passwordHash = await bcrypt.hash('Password123!', 10);
@@ -29,14 +28,16 @@ async function seed() {
     ];
 
     for (const u of users) {
-        await run(
-            'INSERT INTO users (name, email, password_hash, role, phone) VALUES (?, ?, ?, ?, ?)',
-            [u.name, u.email, passwordHash, u.role, u.phone]
-        );
-        console.log(`Created user: ${u.email} (${u.role})`);
+        const existing = await get('SELECT id FROM users WHERE email = ?', [u.email]);
+        if (!existing) {
+            await run(
+                'INSERT INTO users (name, email, password_hash, role, phone) VALUES (?, ?, ?, ?, ?)',
+                [u.name, u.email, passwordHash, u.role, u.phone]
+            );
+            console.log(`Created user: ${u.email} (${u.role})`);
+        }
     }
 
-    const adminUser = await get('SELECT id FROM users WHERE email = ?', ['admin@ticketflow.com']);
     const organiserUser = await get('SELECT id FROM users WHERE email = ?', ['organiser@ticketflow.com']);
 
     // 2. Venues & Seat Layouts
@@ -86,28 +87,31 @@ async function seed() {
     const venueMap = {};
 
     for (const vData of venuesToCreate) {
-        const res = await run(
-            'INSERT INTO venues (name, location, address, capacity) VALUES (?, ?, ?, ?)',
-            [vData.name, vData.location, vData.address, vData.capacity]
-        );
-        const vObj = { id: res.lastID };
+        let vObj = await get('SELECT id FROM venues WHERE name = ?', [vData.name]);
+        if (!vObj) {
+            const res = await run(
+                'INSERT INTO venues (name, location, address, capacity) VALUES (?, ?, ?, ?)',
+                [vData.name, vData.location, vData.address, vData.capacity]
+            );
+            vObj = { id: res.lastID };
 
-        const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-        for (let rIdx = 0; rIdx < vData.rowsCount; rIdx++) {
-            const rowLabel = rows[rIdx];
-            let category = 'Economy';
-            if (rIdx < 2) category = 'VIP';
-            else if (rIdx < 4) category = 'Premium';
-            else if (rIdx < 6) category = 'Standard';
+            const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+            for (let rIdx = 0; rIdx < vData.rowsCount; rIdx++) {
+                const rowLabel = rows[rIdx];
+                let category = 'Economy';
+                if (rIdx < 2) category = 'VIP';
+                else if (rIdx < 4) category = 'Premium';
+                else if (rIdx < 6) category = 'Standard';
 
-            for (let num = 1; num <= vData.seatsPerRow; num++) {
-                await run(
-                    'INSERT INTO venue_seats (venue_id, row_label, seat_number, category, pos_x, pos_y, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    [vObj.id, rowLabel, num, category, (num - 1) * 45, rIdx * 45, 'active']
-                );
+                for (let num = 1; num <= vData.seatsPerRow; num++) {
+                    await run(
+                        'INSERT INTO venue_seats (venue_id, row_label, seat_number, category, pos_x, pos_y, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        [vObj.id, rowLabel, num, category, (num - 1) * 45, rIdx * 45, 'active']
+                    );
+                }
             }
+            console.log(`Created venue: ${vData.name} (${vData.location})`);
         }
-        console.log(`Created venue: ${vData.name} (${vData.location})`);
         venueMap[vData.name] = vObj.id;
     }
 
@@ -193,30 +197,37 @@ async function seed() {
     ];
 
     for (const ev of eventsData) {
-        const res = await run(
-            'INSERT INTO events (title, event_type, description, poster_url, venue_id, organiser_id, start_date, duration_mins, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [ev.title, ev.event_type, ev.description, ev.poster_url, ev.venue_id, ev.organiser_id, ev.start_date, ev.duration_mins, 'published']
-        );
-        const eventId = res.lastID;
-        console.log(`Created event: ${ev.title} (${ev.event_type})`);
-
-        // Snapshot venue seats into event_seats
-        const vSeats = await query('SELECT * FROM venue_seats WHERE venue_id = ?', [ev.venue_id]);
-        for (const vs of vSeats) {
-            const seatPrice = ev.prices[vs.category] || 250;
-            await run(
-                'INSERT INTO event_seats (event_id, venue_seat_id, row_label, seat_number, category, price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [eventId, vs.id, vs.row_label, vs.seat_number, vs.category, seatPrice, 'AVAILABLE']
+        const existingEv = await get('SELECT id FROM events WHERE title = ?', [ev.title]);
+        let eventId;
+        if (!existingEv) {
+            const res = await run(
+                'INSERT INTO events (title, event_type, description, poster_url, venue_id, organiser_id, start_date, duration_mins, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [ev.title, ev.event_type, ev.description, ev.poster_url, ev.venue_id, ev.organiser_id, ev.start_date, ev.duration_mins, 'published']
             );
+            eventId = res.lastID;
+            console.log(`Created event: ${ev.title} (${ev.event_type})`);
+
+            // Snapshot venue seats into event_seats
+            const vSeats = await query('SELECT * FROM venue_seats WHERE venue_id = ?', [ev.venue_id]);
+            for (const vs of vSeats) {
+                const seatPrice = ev.prices[vs.category] || 250;
+                await run(
+                    'INSERT INTO event_seats (event_id, venue_seat_id, row_label, seat_number, category, price, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                    [eventId, vs.id, vs.row_label, vs.seat_number, vs.category, seatPrice, 'AVAILABLE']
+                );
+            }
+            console.log(`Created ${vSeats.length} seat inventory records for event #${eventId}`);
         }
-        console.log(`Created ${vSeats.length} seat inventory records for event #${eventId}`);
     }
 
-    console.log('Seeding of Sports, Venues, Movies & Concerts completed successfully!');
-    process.exit(0);
+    console.log('Seeding completed successfully!');
 }
 
-seed().catch((err) => {
-    console.error('Seed error:', err);
-    process.exit(1);
-});
+if (require.main === module) {
+    runSeed().then(() => process.exit(0)).catch(err => {
+        console.error('Seed error:', err);
+        process.exit(1);
+    });
+}
+
+module.exports = { runSeed };

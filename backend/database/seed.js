@@ -1,23 +1,12 @@
 const bcrypt = require('bcryptjs');
-const fs = require('fs');
-const path = require('path');
 const { initDb, run, query, get } = require('./db');
 
 async function runSeed() {
-    console.log('Checking database seed status...');
+    console.log('Starting robust database seed verification...');
 
     await initDb();
 
-    // Check if events already exist
-    const existingEvents = await get('SELECT COUNT(*) as count FROM events');
-    if (existingEvents && existingEvents.count > 0) {
-        console.log(`Database already populated with ${existingEvents.count} events.`);
-        return;
-    }
-
-    console.log('Seeding initial users, venues, seat layouts, and events...');
-
-    // 1. Users
+    // 1. Ensure Users exist
     const passwordHash = await bcrypt.hash('Password123!', 10);
 
     const users = [
@@ -38,9 +27,16 @@ async function runSeed() {
         }
     }
 
-    const organiserUser = await get('SELECT id FROM users WHERE email = ?', ['organiser@ticketflow.com']);
+    let organiserUser = await get('SELECT id FROM users WHERE email = ?', ['organiser@ticketflow.com']);
+    if (!organiserUser) {
+        const res = await run(
+            'INSERT INTO users (name, email, password_hash, role, phone) VALUES (?, ?, ?, ?, ?)',
+            ['Global Events Co.', 'organiser@ticketflow.com', passwordHash, 'organiser', '+91 9876543211']
+        );
+        organiserUser = { id: res.lastID };
+    }
 
-    // 2. Venues & Seat Layouts
+    // 2. Ensure Venues exist
     const venuesToCreate = [
         {
             name: 'Grand Arena Stadium',
@@ -115,7 +111,7 @@ async function runSeed() {
         venueMap[vData.name] = vObj.id;
     }
 
-    // 3. Events & Event Seat Snapshots
+    // 3. Ensure Events & Event Seats exist
     const eventsData = [
         {
             title: 'Coldplay Live in Chennai - Music of the Spheres',
@@ -196,7 +192,9 @@ async function runSeed() {
         }
     ];
 
+    let seededCount = 0;
     for (const ev of eventsData) {
+        if (!ev.venue_id) continue;
         const existingEv = await get('SELECT id FROM events WHERE title = ?', [ev.title]);
         let eventId;
         if (!existingEv) {
@@ -205,7 +203,7 @@ async function runSeed() {
                 [ev.title, ev.event_type, ev.description, ev.poster_url, ev.venue_id, ev.organiser_id, ev.start_date, ev.duration_mins, 'published']
             );
             eventId = res.lastID;
-            console.log(`Created event: ${ev.title} (${ev.event_type})`);
+            seededCount++;
 
             // Snapshot venue seats into event_seats
             const vSeats = await query('SELECT * FROM venue_seats WHERE venue_id = ?', [ev.venue_id]);
@@ -216,11 +214,13 @@ async function runSeed() {
                     [eventId, vs.id, vs.row_label, vs.seat_number, vs.category, seatPrice, 'AVAILABLE']
                 );
             }
-            console.log(`Created ${vSeats.length} seat inventory records for event #${eventId}`);
+            console.log(`Seeded event: ${ev.title} (${ev.event_type}) with ${vSeats.length} seats.`);
         }
     }
 
-    console.log('Seeding completed successfully!');
+    const totalEvents = await get('SELECT COUNT(*) as count FROM events');
+    console.log(`Seed verification complete. Total events in DB: ${totalEvents.count}`);
+    return totalEvents.count;
 }
 
 if (require.main === module) {

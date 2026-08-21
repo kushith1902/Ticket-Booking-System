@@ -6,7 +6,7 @@ const cors = require('cors');
 const os = require('os');
 const { Server } = require('socket.io');
 
-const { initDb } = require('./database/db');
+const { initDb, get } = require('./database/db');
 const { runSeed } = require('./database/seed');
 const { initSocket } = require('./websocket/socketHandler');
 const { startTTLWorker } = require('./jobs/ttlWorker');
@@ -49,6 +49,17 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/waitlist', waitlistRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api', dashboardRoutes);
+
+// Instant Browser Trigger Endpoint for Database Seeding
+app.get('/api/seed-db', async (req, res) => {
+    try {
+        const count = await runSeed();
+        res.json({ message: 'Database seeded successfully!', totalEventsInDB: count });
+    } catch (err) {
+        console.error('Seed endpoint error:', err);
+        res.status(500).json({ error: 'Failed to seed database: ' + err.message });
+    }
+});
 
 // Fallback to index.html for SPA routing if needed
 app.get('*', (req, res) => {

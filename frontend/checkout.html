@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout & Payment | TicketFlow</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <link rel="stylesheet" href="/css/seats.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">🎟 <span>TicketFlow</span></a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-actions"></div>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 30px; padding-bottom: 80px; max-width: 960px;">
+
+        <!-- Server-Authoritative 10-Minute Hold Countdown Bar -->
+        <div class="hold-timer-bar">
+            <div>⏱ Seats locked for your checkout</div>
+            <div>Reservation expires in: <span class="timer-count" id="countdown-timer">10:00</span></div>
+        </div>
+
+        <h1 style="font-size: 1.8rem; margin-bottom: 24px;">Checkout</h1>
+
+        <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 30px; align-items: start;">
+
+            <div>
+                <!-- Event Summary Card -->
+                <div class="card" style="padding: 24px; margin-bottom: 24px;" id="checkout-event-info">
+                    <!-- Injected dynamically -->
+                </div>
+
+                <!-- Customer Details Form -->
+                <div class="card" style="padding: 24px; margin-bottom: 24px;">
+                    <h3 style="font-size: 1.15rem; margin-bottom: 16px;">Contact Details for Digital Ticket Delivery</h3>
+                    <div class="form-group">
+                        <label class="form-label">Email Address (QR Ticket will be sent here)</label>
+                        <input type="email" id="cust-email" class="form-control" placeholder="user@example.com" value="customer@example.com" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number (SMS updates)</label>
+                        <input type="tel" id="cust-phone" class="form-control" placeholder="+91 9876543210" value="+91 9876543212" />
+                    </div>
+                </div>
+
+                <!-- Payment Options -->
+                <div class="card" style="padding: 24px;">
+                    <h3 style="font-size: 1.15rem; margin-bottom: 16px;">Select Payment Method</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label style="background: var(--bg-surface); padding: 14px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                            <input type="radio" name="payment" value="card" checked />
+                            <span>💳 Credit / Debit Card (Instant Approval)</span>
+                        </label>
+                        <label style="background: var(--bg-surface); padding: 14px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                            <input type="radio" name="payment" value="upi" />
+                            <span>📱 UPI / GPay / PhonePe</span>
+                        </label>
+                        <label style="background: var(--bg-surface); padding: 14px 20px; border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                            <input type="radio" name="payment" value="netbanking" />
+                            <span>🏦 Net Banking</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Summary Panel -->
+            <div class="card" style="padding: 24px; position: sticky; top: 90px;">
+                <h3 style="font-size: 1.15rem; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">ORDER SUMMARY</h3>
+
+                <div id="price-breakdown" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                    <!-- Injected dynamically -->
+                </div>
+
+                <button id="confirm-booking-btn" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 1.05rem;">
+                    CONFIRM & PAY NOW
+                </button>
+
+                <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 12px;">
+                    🔒 256-Bit SSL Encrypted Payment Gateway Simulation
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initCheckout } from '/js/checkout.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCheckout();
+        });
+    </script>
+    <script type="module" src="/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+require('dotenv').config();
+const express = require('express');
+const http = require('http');
+const path = require('path');
+const cors = require('cors');
+const { Server } = require('socket.io');
+
+const { initDb } = require('./database/db');
+const { initSocket } = require('./websocket/socketHandler');
+const { startTTLWorker } = require('./jobs/ttlWorker');
+
+// Route imports
+const authRoutes = require('./routes/auth');
+const eventRoutes = require('./routes/events');
+const seatRoutes = require('./routes/seats');
+const bookingRoutes = require('./routes/bookings');
+const waitlistRoutes = require('./routes/waitlist');
+const venueRoutes = require('./routes/venues');
+const dashboardRoutes = require('./routes/dashboard');
+
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
+});
+
+// Initialize Socket.IO connection handling
+initSocket(io);
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Serve frontend static assets & pages
+const frontendPath = path.resolve(__dirname, '../frontend');
+app.use(express.static(frontendPath));
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/seats', seatRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/waitlist', waitlistRoutes);
+app.use('/api/venues', venueRoutes);
+app.use('/api', dashboardRoutes);
+
+// Fallback to index.html for SPA routing if needed
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    const targetFile = path.join(frontendPath, req.path);
+    if (require('fs').existsSync(targetFile) && require('fs').statSync(targetFile).isFile()) {
+        return res.sendFile(targetFile);
+    }
+    res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
+const PORT = process.env.PORT || 3000;
+
+initDb().then(() => {
+    server.listen(PORT, () => {
+        console.log(`=======================================================`);
+        console.log(`🚀 TicketFlow System listening on http://localhost:${PORT}`);
+        console.log(`=======================================================`);
+        startTTLWorker();
+    });
+}).catch(err => {
+    console.error('Database initialization failed:', err);
+});

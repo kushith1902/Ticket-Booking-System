@@ -1,0 +1,8 @@
+node_modules/
+.env
+ticketflow.db
+ticketflow.db-journal
+ticketflow.db-wal
+ticketflow.db-shm
+.DS_Store
+*.log

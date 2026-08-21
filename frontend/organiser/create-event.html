@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create New Event | TicketFlow</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/forms.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">🎟 <span>TicketFlow Organiser</span></a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-actions"></div>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px; max-width: 800px;">
+        <h1 class="section-title">Create & Publish New Event</h1>
+        <p class="section-subtitle">Snapshot venue seating layout and configure tier pricing</p>
+
+        <div class="card" style="padding: 30px;">
+            <form id="create-event-form">
+                <div class="form-group">
+                    <label class="form-label">Event Title</label>
+                    <input type="text" id="event-title" class="form-control" placeholder="e.g. Taylor Swift Eras Tour Live" required />
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Event Type</label>
+                        <select id="event-type" class="form-select" required>
+                            <option value="sports">Sports</option>
+                            <option value="concert">Concert</option>
+                            <option value="movie">Movie</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Venue</label>
+                        <select id="venue-select" class="form-select" required>
+                            <!-- Injected dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="description" class="form-control" rows="3" placeholder="Describe the show, highlights, age limits, etc."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Poster Image URL</label>
+                    <input type="url" id="poster-url" class="form-control" placeholder="https://images.unsplash.com/..." value="https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=1000&q=80" />
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label">Start Date & Time</label>
+                        <input type="datetime-local" id="start-date" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Duration (Minutes)</label>
+                        <input type="number" id="duration" class="form-control" value="180" min="30" max="600" />
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.1rem; margin: 24px 0 12px; border-top: 1px solid var(--border-color); padding-top: 20px;">Category Pricing Tiers (₹)</h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">VIP</label>
+                        <input type="number" id="price-vip" class="form-control" value="3999" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Premium</label>
+                        <input type="number" id="price-premium" class="form-control" value="2499" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Standard</label>
+                        <input type="number" id="price-standard" class="form-control" value="1499" required />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Economy</label>
+                        <input type="number" id="price-economy" class="form-control" value="999" required />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 14px;">PUBLISH EVENT</button>
+            </form>
+        </div>
+    </main>
+
+    <script type="module">
+        import { api } from '/js/api.js';
+        import { showToast } from '/js/toast.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const venueSelect = document.getElementById('venue-select');
+            try {
+                const data = await api.getVenues();
+                venueSelect.innerHTML = data.venues.map(v => `<option value="${v.id}">${v.name} (${v.location}) - Capacity ${v.capacity}</option>`).join('');
+            } catch (err) {
+                showToast('Failed to load venues', 'error');
+            }
+
+            // Set default date to tomorrow 7:30 PM
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 5);
+            tomorrow.setHours(19, 30, 0, 0);
+            document.getElementById('start-date').value = tomorrow.toISOString().slice(0, 16);
+
+            document.getElementById('create-event-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = document.getElementById('event-title').value;
+                const event_type = document.getElementById('event-type').value;
+                const venue_id = document.getElementById('venue-select').value;
+                const description = document.getElementById('description').value;
+                const poster_url = document.getElementById('poster-url').value;
+                const start_date = document.getElementById('start-date').value.replace('T', ' ') + ':00';
+                const duration_mins = parseInt(document.getElementById('duration').value, 10);
+
+                const prices = {
+                    VIP: parseFloat(document.getElementById('price-vip').value),
+                    Premium: parseFloat(document.getElementById('price-premium').value),
+                    Standard: parseFloat(document.getElementById('price-standard').value),
+                    Economy: parseFloat(document.getElementById('price-economy').value)
+                };
+
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+
+                try {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Publishing...';
+                    await api.createEvent({
+                        title, event_type, venue_id, description, poster_url, start_date, duration_mins, prices
+                    });
+                    showToast('Event created and seat inventory snapshotted!', 'success');
+                    setTimeout(() => window.location.href = '/organiser/dashboard.html', 1000);
+                } catch (err) {
+                    showToast(err.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'PUBLISH EVENT';
+                }
+            });
+        });
+    </script>
+    <script type="module" src="/js/auth.js"></script>
+</body>
+</html>

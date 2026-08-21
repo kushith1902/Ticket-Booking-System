@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings | TicketFlow</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">🎟 <span>TicketFlow</span></a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-actions"></div>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px; max-width: 900px;">
+        <h1 class="section-title">My Bookings</h1>
+        <p class="section-subtitle">Manage your active tickets and view past order history</p>
+
+        <div id="bookings-list">
+            <!-- Loaded dynamically via js/bookings.js -->
+        </div>
+    </main>
+
+    <script type="module">
+        import { loadBookings } from '/js/bookings.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBookings();
+        });
+    </script>
+    <script type="module" src="/js/auth.js"></script>
+</body>
+</html>

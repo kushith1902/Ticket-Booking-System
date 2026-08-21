@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Seats | TicketFlow</title>
+
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/seats.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">🎟 <span>TicketFlow</span></a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-actions"></div>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 30px; padding-bottom: 80px;">
+        <div style="margin-bottom: 24px;">
+            <a href="/events.html" style="font-size: 0.9rem; color: var(--text-muted);">← Back to Events</a>
+            <h1 id="event-title" style="font-size: 1.8rem; margin-top: 6px;">Select Your Seats</h1>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Click on available green seats to choose your preference</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2.5fr 1fr; gap: 30px; align-items: start;">
+            <!-- Interactive Visual Seat Map Canvas -->
+            <div id="seat-map-container">
+                <!-- Injected dynamically by js/seats.js -->
+            </div>
+
+            <!-- Sticky Selected Seats Checkout Panel -->
+            <div class="booking-summary-panel" id="summary-panel">
+                <h3 style="font-size: 1.15rem; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">YOUR SELECTION</h3>
+
+                <div id="selected-seats-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+                    <span style="color: var(--text-muted);">No seats selected</span>
+                </div>
+
+                <div class="summary-total">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Subtotal:</span>
+                        <span id="summary-total-price" style="color: var(--accent-primary);">₹0</span>
+                    </div>
+                </div>
+
+                <button id="continue-checkout-btn" class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 14px;" disabled>
+                    CONTINUE TO CHECKOUT
+                </button>
+
+                <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 12px;">
+                    🔒 Seats will be locked for 10 minutes upon clicking Continue.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initSeatSelection } from '/js/seats.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('id');
+            if (eventId) {
+                initSeatSelection(eventId);
+            }
+        });
+    </script>
+    <script type="module" src="/js/auth.js"></script>
+</body>
+</html>

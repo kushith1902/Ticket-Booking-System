@@ -1,0 +1,35 @@
+/* Responsive Breakpoints CSS */
+@media (max-width: 1024px) {
+    .grid-3, .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .grid-3, .grid-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .display-title {
+        font-size: 2.2rem;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .ticket-body {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-summary-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        z-index: 999;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8);
+    }
+}

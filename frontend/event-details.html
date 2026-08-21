@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Details | TicketFlow</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">🎟 <span>TicketFlow</span></a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-actions"></div>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px;" id="event-details-container">
+        <div style="text-align: center; padding: 40px; color: var(--text-muted);">Loading event details...</div>
+    </main>
+
+    <script type="module">
+        import { api } from '/js/api.js';
+        import { formatCurrency, formatDate, formatTime } from '/js/utils.js';
+        import { showToast } from '/js/toast.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('id');
+            const container = document.getElementById('event-details-container');
+
+            if (!eventId) {
+                container.innerHTML = `<div style="color: #ef4444;">Event ID missing</div>`;
+                return;
+            }
+
+            try {
+                const data = await api.getEventDetails(eventId);
+                const { event, categories } = data;
+
+                const isTotalSoldOut = categories.every(c => c.available_count <= 0);
+
+                container.innerHTML = `
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 40px; align-items: start;">
+                        <div>
+                            <img src="${event.poster_url}" alt="${event.title}" style="width: 100%; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-glow);" />
+                        </div>
+
+                        <div>
+                            <span class="badge ${event.event_type === 'concert' ? 'badge-concert' : 'badge-movie'}" style="margin-bottom: 12px;">${event.event_type.toUpperCase()}</span>
+                            <h1 style="font-size: 2.2rem; margin-bottom: 12px;">${event.title}</h1>
+
+                            <p style="color: var(--text-secondary); margin-bottom: 24px; line-height: 1.6;">${event.description}</p>
+
+                            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 30px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                                    <div>📍 <strong>Venue:</strong> ${event.venue_name}, ${event.venue_location}</div>
+                                    <div>📅 <strong>Date:</strong> ${formatDate(event.start_date)}</div>
+                                    <div>⏰ <strong>Time:</strong> ${formatTime(event.start_date)}</div>
+                                    <div>⏳ <strong>Duration:</strong> ${event.duration_mins} Minutes</div>
+                                </div>
+                            </div>
+
+                            <h3 style="font-size: 1.2rem; margin-bottom: 16px;">Available Seat Categories</h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px;">
+                                ${categories.map(c => {
+                                    const soldOut = c.available_count <= 0;
+                                    return `
+                                        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+                                            <div>
+                                                <strong style="font-size: 1.05rem;">${c.category} Class</strong>
+                                                <div style="font-size: 0.85rem; color: ${soldOut ? '#ef4444' : 'var(--status-available)'}; margin-top: 2px;">
+                                                    ${soldOut ? 'SOLD OUT' : `${c.available_count} seats remaining`}
+                                                </div>
+                                            </div>
+
+                                            <div style="display: flex; align-items: center; gap: 16px;">
+                                                <div style="font-size: 1.2rem; font-weight: 800; color: var(--accent-primary);">${formatCurrency(c.price)}</div>
+                                                ${soldOut ? `
+                                                    <button class="btn btn-outline waitlist-btn" data-category="${c.category}" style="padding: 6px 14px; font-size: 0.8rem;">Join Waitlist</button>
+                                                ` : ''}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+
+                            ${isTotalSoldOut ? `
+                                <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444; border-radius: var(--radius-md); padding: 20px; text-align: center;">
+                                    <h3 style="color: #ef4444; margin-bottom: 8px;">ALL TICKETS SOLD OUT</h3>
+                                    <p style="color: var(--text-secondary); margin-bottom: 16px;">Join the waitlist above to receive instant notifications when cancelled seats become available!</p>
+                                </div>
+                            ` : `
+                                <a href="/seat-selection.html?id=${event.id}" class="btn btn-primary" style="width: 100%; padding: 16px; font-size: 1.1rem;">SELECT SEATS ON VISUAL SEAT MAP</a>
+                            `}
+                        </div>
+                    </div>
+                `;
+
+                // Attach Waitlist Handlers
+                container.querySelectorAll('.waitlist-btn').forEach(btn => {
+                    btn.onclick = async () => {
+                        const user = localStorage.getItem('ticketflow_user');
+                        if (!user) {
+                            showToast('Please log in to join waitlist', 'warning');
+                            setTimeout(() => window.location.href = '/login.html', 1000);
+                            return;
+                        }
+
+                        const category = btn.dataset.category;
+                        try {
+                            btn.disabled = true;
+                            btn.textContent = 'Joining...';
+                            const waitRes = await api.joinWaitlist(eventId, category);
+                            showToast(`Joined waitlist! You are Queue Position #${waitRes.position}`, 'success');
+                            setTimeout(() => window.location.href = '/waitlist.html', 1000);
+                        } catch (err) {
+                            showToast(err.message, 'error');
+                            btn.disabled = false;
+                            btn.textContent = 'Join Waitlist';
+                        }
+                    };
+                });
+
+            } catch (err) {
+                container.innerHTML = `<div style="color: #ef4444;">Failed to load details: ${err.message}</div>`;
+            }
+        });
+    </script>
+    <script type="module" src="/js/auth.js"></script>
+</body>
+</html>

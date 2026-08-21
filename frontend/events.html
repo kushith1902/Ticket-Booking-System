@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Events & Movies | TicketFlow</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">🎟 <span>TicketFlow</span></a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-actions"></div>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px;">
+        <h1 class="section-title">Explore Movies, Concerts & Events</h1>
+        <p class="section-subtitle">Filter by event type, city, date, or search by title</p>
+
+        <!-- Filters Drawer -->
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 30px;">
+            <form id="filter-form" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 16px; align-items: center;">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search" class="form-control" placeholder="Search events..." />
+                </div>
+                <select id="type" class="form-select">
+                    <option value="all">All Categories</option>
+                    <option value="movie">Movies</option>
+                    <option value="concert">Concerts</option>
+                    <option value="sports">Sports</option>
+                </select>
+                <select id="city" class="form-select">
+                    <option value="all">All Locations</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Coimbatore">Coimbatore</option>
+                    <option value="Vellore">Vellore</option>
+                </select>
+                <select id="sort" class="form-select">
+                    <option value="date_asc">Date (Soonest)</option>
+                    <option value="price_low">Price (Low to High)</option>
+                    <option value="price_high">Price (High to Low)</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+            </form>
+        </div>
+
+        <!-- Events Grid -->
+        <div class="grid grid-4" id="events-grid"></div>
+    </main>
+
+    <script type="module">
+        import { loadEvents } from '/js/events.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialType = urlParams.get('type') || 'all';
+            const initialCity = urlParams.get('city') || 'all';
+            const initialSearch = urlParams.get('search') || '';
+
+            document.getElementById('type').value = initialType;
+            document.getElementById('city').value = initialCity;
+            document.getElementById('search').value = initialSearch;
+
+            loadEvents({ type: initialType, city: initialCity, search: initialSearch });
+
+            document.getElementById('filter-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const type = document.getElementById('type').value;
+                const city = document.getElementById('city').value;
+                const search = document.getElementById('search').value;
+                const sort = document.getElementById('sort').value;
+
+                loadEvents({ type, city, search, sort });
+            });
+        });
+    </script>
+    <script type="module" src="/js/auth.js"></script>
+</body>
+</html>

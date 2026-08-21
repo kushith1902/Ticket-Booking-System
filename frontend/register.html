@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | TicketFlow</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/forms.css">
+</head>
+<body style="background: radial-gradient(circle at center, #131b2e, #0b0f19);">
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">🎟 <span>TicketFlow</span></a>
+        </div>
+    </header>
+
+    <div class="container" style="max-width: 460px; margin: 60px auto;">
+        <div class="card" style="padding: 36px; box-shadow: var(--shadow-glow);">
+            <h2 style="font-size: 1.6rem; text-align: center; margin-bottom: 8px;">Create Account</h2>
+            <p style="color: var(--text-muted); text-align: center; font-size: 0.9rem; margin-bottom: 24px;">Join thousands of fans booking live tickets daily</p>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label class="form-label" for="name">Full Name</label>
+                    <input type="text" id="name" class="form-control" placeholder="John Doe" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" class="form-control" placeholder="john@example.com" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="phone">Phone Number</label>
+                    <input type="tel" id="phone" class="form-control" placeholder="+91 9876543210" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="role">Account Role</label>
+                    <select id="role" class="form-select">
+                        <option value="customer">Customer (Book Movies & Concerts)</option>
+                        <option value="organiser">Event Organiser (Host & Sell Tickets)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 12px;">Create Account</button>
+            </form>
+
+            <div style="margin-top: 24px; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+                Already have an account? <a href="/login.html" style="color: var(--accent-primary); font-weight: 600;">Log In</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/js/auth.js"></script>
+</body>
+</html>

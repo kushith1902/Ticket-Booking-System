@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmed | TicketFlow</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body style="background: radial-gradient(circle at center, #131b2e, #0b0f19);">
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">🎟 <span>TicketFlow</span></a>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 50px; padding-bottom: 80px; text-align: center;">
+
+        <div style="font-size: 3rem; margin-bottom: 12px;">✅</div>
+        <h1 style="font-size: 2.2rem; color: var(--status-available); margin-bottom: 8px;">BOOKING CONFIRMED!</h1>
+        <p style="color: var(--text-secondary); font-size: 1.05rem; margin-bottom: 40px;">Your tickets have been issued and sent to your email.</p>
+
+        <div id="success-ticket-container">
+            <!-- Digital Ticket card loaded dynamically -->
+        </div>
+
+        <div style="display: flex; gap: 16px; justify-content: center; margin-top: 30px;">
+            <a id="view-ticket-btn" href="#" class="btn btn-primary">VIEW DIGITAL QR TICKET</a>
+            <a href="/bookings.html" class="btn btn-secondary">MY BOOKING HISTORY</a>
+            <a href="/index.html" class="btn btn-outline">RETURN TO HOME</a>
+        </div>
+    </main>
+
+    <script type="module">
+        import { api } from '/js/api.js';
+        import { formatCurrency, formatDate, formatTime } from '/js/utils.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const bookingId = urlParams.get('id');
+
+            if (!bookingId) return;
+
+            try {
+                const data = await api.getTicket(bookingId);
+                const b = data.booking;
+
+                document.getElementById('view-ticket-btn').href = `/ticket.html?id=${b.id}`;
+
+                document.getElementById('success-ticket-container').innerHTML = `
+                    <div class="ticket-container">
+                        <div class="ticket-header">
+                            <span>TICKETFLOW OFFICIAL TICKET</span>
+                            <span class="badge badge-available">CONFIRMED</span>
+                        </div>
+                        <div class="ticket-body">
+                            <div class="ticket-info" style="text-align: left;">
+                                <h3 style="font-size: 1.4rem; color: var(--accent-primary);">${b.event_title}</h3>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary);">📍 ${b.venue_name}</p>
+                                <p style="font-size: 0.9rem; color: var(--text-secondary);">📅 ${formatDate(b.start_date)} • ⏰ ${formatTime(b.start_date)}</p>
+                                <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 8px 0;" />
+                                <div style="display: flex; gap: 20px;">
+                                    <div>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted);">SEATS</div>
+                                        <div style="font-size: 1.1rem; font-weight: 800; color: #fff;">${b.seatLabels.join(', ')}</div>
+                                    </div>
+                                    <div>
+                                        <div style="font-size: 0.75rem; color: var(--text-muted);">BOOKING REF</div>
+                                        <div style="font-size: 1.1rem; font-weight: 800; color: var(--accent-primary);">${b.booking_ref}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ticket-qr">
+                                <img src="${b.qrDataUrl}" alt="QR Ticket Code" />
+                                <div style="font-size: 0.75rem; color: #000; font-weight: 700; margin-top: 4px;">SCAN FOR GATE ENTRY</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>

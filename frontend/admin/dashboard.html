@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | TicketFlow</title>
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">🎟 <span>TicketFlow Admin</span></a>
+            <ul class="nav-links" id="nav-links"></ul>
+            <div class="nav-actions" id="nav-actions"></div>
+        </div>
+    </header>
+
+    <main class="container" style="padding-top: 40px; padding-bottom: 80px;">
+        <div class="flex-between" style="margin-bottom: 30px;">
+            <div>
+                <h1 class="section-title">Platform Administration</h1>
+                <p class="section-subtitle">System-wide metrics, active hold monitoring, user management</p>
+            </div>
+            <a href="/admin/venue-builder.html" class="btn btn-primary">🛠 Launch Visual Venue Builder</a>
+        </div>
+
+        <!-- Metrics Overview Grid -->
+        <div class="metrics-grid" id="admin-metrics">
+            <!-- Loaded dynamically -->
+        </div>
+
+        <!-- System User Management Table -->
+        <h3 style="font-size: 1.25rem; margin-bottom: 16px;">Platform Users Directory</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>User Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Phone</th>
+                        <th>Joined Date</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-users-body">
+                    <!-- Loaded dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initAdminDashboard } from '/js/admin.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initAdminDashboard();
+        });
+    </script>
+    <script type="module" src="/js/auth.js"></script>
+</body>
+</html>

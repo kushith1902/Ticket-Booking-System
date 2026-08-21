@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TicketFlow | Real-World Ticket Booking for Movies & Concerts</title>
+
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navbar.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <link rel="stylesheet" href="/css/responsive.css">
+
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="/index.html" class="brand-logo">
+                🎟 <span>TicketFlow</span>
+            </a>
+            <ul class="nav-links" id="nav-links">
+                <!-- Injected by auth.js -->
+            </ul>
+            <div class="nav-actions" id="nav-actions">
+                <!-- Injected by auth.js -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Quick Demo Accounts Banner -->
+    <div style="background: rgba(245, 158, 11, 0.15); border-bottom: 1px solid var(--accent-primary); padding: 10px 0; text-align: center; font-size: 0.85rem;">
+        <span style="font-weight: 700; color: var(--accent-primary);">⚡ DEMO ACCOUNTS READY:</span>
+        <span style="margin: 0 10px;">👤 <strong>Customer:</strong> customer@example.com / Password123!</span>
+        <span style="margin: 0 10px;">🎤 <strong>Organiser:</strong> organiser@ticketflow.com / Password123!</span>
+        <span style="margin: 0 10px;">⚙️ <strong>Admin:</strong> admin@ticketflow.com / Password123!</span>
+    </div>
+
+    <!-- Hero Section -->
+    <section style="position: relative; padding: 80px 0 60px; background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 50%), radial-gradient(circle at bottom left, rgba(245, 158, 11, 0.12), transparent 50%); border-bottom: 1px solid var(--border-color);">
+        <div class="container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+            <div>
+                <span class="badge badge-concert" style="margin-bottom: 16px;">FEATURED LIVE CONCERT</span>
+                <h1 class="display-title" style="margin-bottom: 16px;">Coldplay Live in Chennai</h1>
+                <p style="font-size: 1.1rem; color: var(--text-secondary); margin-bottom: 24px;">
+                    Music of the Spheres World Tour. Experience world-class lasers, pyrotechnics, and iconic anthems at Grand Arena Stadium.
+                </p>
+                <div style="display: flex; gap: 16px; margin-bottom: 30px;">
+                    <a href="/event-details.html?id=1" class="btn btn-primary">BOOK TICKETS NOW</a>
+                    <a href="/events.html" class="btn btn-secondary">EXPLORE ALL EVENTS</a>
+                </div>
+                <div style="display: flex; gap: 24px; color: var(--text-muted); font-size: 0.9rem;">
+                    <div>📍 <strong>Grand Arena Stadium</strong></div>
+                    <div>📅 <strong>20 Sep 2026 • 7:30 PM</strong></div>
+                    <div>🏷 <strong>From ₹999</strong></div>
+                </div>
+            </div>
+            <div style="position: relative;">
+                <img src="https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=1000&q=80" alt="Coldplay Live" style="width: 100%; height: 380px; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-glow);" />
+            </div>
+        </div>
+    </section>
+
+    <!-- Search & Filter Bar -->
+    <section style="margin-top: -30px; position: relative; z-index: 10;">
+        <div class="container">
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; box-shadow: var(--shadow-subtle);">
+                <form id="hero-search-form" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 16px; align-items: center;">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="search-input" class="form-control" placeholder="Search movies, concerts, or venues..." />
+                    </div>
+                    <select id="filter-type" class="form-select">
+                        <option value="all">All Event Types</option>
+                        <option value="movie">Movies</option>
+                        <option value="concert">Concerts</option>
+                        <option value="sports">Sports</option>
+                    </select>
+                    <select id="filter-city" class="form-select">
+                        <option value="all">All Cities</option>
+                        <option value="Chennai">Chennai</option>
+                        <option value="Coimbatore">Coimbatore</option>
+                        <option value="Vellore">Vellore</option>
+                    </select>
+                    <input type="date" id="filter-date" class="form-control" />
+                    <button type="submit" class="btn btn-primary">SEARCH</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Events Listing -->
+    <main class="container" style="padding-top: 60px; padding-bottom: 80px;">
+        <div class="flex-between" style="margin-bottom: 24px;">
+            <div>
+                <h2 class="section-title">Featured Events & Blockbusters</h2>
+                <p class="section-subtitle">Discover trending concerts and latest movie releases near you</p>
+            </div>
+            <a href="/events.html" style="font-weight: 600; color: var(--accent-primary);">View All Events →</a>
+        </div>
+
+        <!-- Dynamic Events Grid -->
+        <div class="grid grid-4" id="events-grid">
+            <!-- Loaded dynamically via js/events.js -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container flex-between">
+            <div>
+                <div class="brand-logo" style="font-size: 1.2rem; margin-bottom: 8px;">🎟 TicketFlow</div>
+                <p>Commercial Real-World Ticket Booking System for Movies & Concerts.</p>
+            </div>
+            <div>
+                <p>© 2026 TicketFlow Inc. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { loadEvents } from '/js/events.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadEvents();
+
+            const searchForm = document.getElementById('hero-search-form');
+            if (searchForm) {
+                searchForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const search = document.getElementById('search-input').value;
+                    const type = document.getElementById('filter-type').value;
+                    const city = document.getElementById('filter-city').value;
+                    const date = document.getElementById('filter-date').value;
+
+                    window.location.href = `/events.html?search=${encodeURIComponent(search)}&type=${type}&city=${city}&date=${date}`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>

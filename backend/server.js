@@ -3,6 +3,7 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const cors = require('cors');
+const os = require('os');
 const { Server } = require('socket.io');
 
 const { initDb } = require('./database/db');
@@ -62,10 +63,28 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
+function getNetworkIPs() {
+    const interfaces = os.networkInterfaces();
+    const ips = [];
+    for (const name of Object.keys(interfaces)) {
+        for (const net of interfaces[name]) {
+            if (net.family === 'IPv4' && !net.internal) {
+                ips.push(net.address);
+            }
+        }
+    }
+    return ips;
+}
+
 initDb().then(() => {
-    server.listen(PORT, () => {
+    server.listen(PORT, '0.0.0.0', () => {
+        const ips = getNetworkIPs();
         console.log(`=======================================================`);
-        console.log(`🚀 TicketFlow System listening on http://localhost:${PORT}`);
+        console.log(`🚀 TicketFlow Application is live!`);
+        console.log(`💻 Local Access:   http://localhost:${PORT}`);
+        ips.forEach(ip => {
+            console.log(`📱 Device Access:  http://${ip}:${PORT}`);
+        });
         console.log(`=======================================================`);
         startTTLWorker();
     });
